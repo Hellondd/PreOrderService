@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Система Предзаказов 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2 class="mb-4">Управление складом и предзаказами</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">Добавить поставку (Менеджер)</div>
+                <div class="card-body">
+                    <form action="/add_supply" method="POST" class="row g-3">
+                        <div class="col-6">
+                            <select name="sku" class="form-select">
+                                {% for p in products %}<option value="{{p.sku}}">{{p.name}}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-3"><input type="number" name="qty" class="form-control" placeholder="Кол-во"></div>
+                        <div class="col-3"><input type="text" name="date" class="form-control" placeholder="Дата"></div>
+                        <button type="submit" class="btn btn-success w-100">Создать поставку</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">Забронировать товар (Клиент)</div>
+                <div class="card-body">
+                    <form action="/make_order" method="POST" class="row g-3">
+                        <div class="col-8">
+                            <select name="sku" class="form-select">
+                                {% for p in products %}<option value="{{p.sku}}">{{p.name}}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4"><input type="number" name="qty" class="form-control" placeholder="Кол-во"></div>
+                        <button type="submit" class="btn btn-warning w-100">Оформить предзаказ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h4>Активные поставки в пути</h4>
+    <table class="table table-striped bg-white">
+        <thead><tr><th>ID</th><th>Товар</th><th>Кол-во</th><th>Дата</th><th>Статус</th><th>Действие</th></tr></thead>
+        <tbody>
+            {% for s in supplies %}
+            <tr>
+                <td>{{s.id}}</td><td>{{s.sku}}</td><td>{{s.quantity}}</td><td>{{s.arrival_date}}</td>
+                <td><span class="badge {{ 'bg-info' if s.status == 'In Transit' else 'bg-secondary' }}">{{s.status}}</span></td>
+                <td>{% if s.status == 'In Transit' %}<a href="/receive/{{s.id}}" class="btn btn-sm btn-outline-primary">Принять на склад</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 class="mt-4">Очередь предзаказов</h4>
+    <table class="table table-hover bg-white">
+        <thead><tr><th>ID</th><th>Клиент ID</th><th>Товар</th><th>Кол-во</th><th>Статус</th></tr></thead>
+        <tbody>
+            {% for o in orders %}
+            <tr>
+                <td>{{o.id}}</td><td>{{o.user_id}}</td><td>{{o.sku}}</td><td>{{o.quantity}}</td>
+                <td><span class="badge {{ 'bg-warning text-dark' if o.status == 'Pending' else 'bg-success' }}">{{o.status}}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
