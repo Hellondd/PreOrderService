@@ -1,21 +1,27 @@
+import os
 from flask import Flask, render_template, request, redirect, session, url_for, flash
+from dotenv import load_dotenv
 from database import db, User, Product, Supply, PreOrder
 from modules.inventory import InventoryModule
 from modules.orders import OrderModule
 from modules.identity import IdentityModule
 
+
+load_dotenv()
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///warehouse.db'
-app.secret_key = 'strict_secret_key_2026'
+app.secret_key = os.getenv('SECRET_KEY', 'fallback_default_key_if_env_missing')
 db.init_app(app)
 
 with app.app_context():
     db.create_all()
     if not User.query.filter_by(username="client").first():
-        # Хардкод убран. telegram_id по умолчанию пустой.
-        db.session.add(User(username="client", password="password123", role="client", telegram_id=""))
+        hashed_pw = IdentityModule.hash_password("password123")
+        db.session.add(User(username="client", password=hashed_pw, role="client", telegram_id=""))
     if not User.query.filter_by(username="admin").first():
-        db.session.add(User(username="admin", password="admin123", role="manager", telegram_id=""))
+        hashed_pw = IdentityModule.hash_password("admin123")
+        db.session.add(User(username="admin", password=hashed_pw, role="manager", telegram_id=""))
     if not Product.query.first():
         db.session.add(Product(sku="IPHONE15", name="Apple iPhone 15"))
         db.session.add(Product(sku="MACBOOK", name="MacBook Pro M3"))

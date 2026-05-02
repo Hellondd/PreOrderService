@@ -5,9 +5,9 @@ db = SQLAlchemy()
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(50))
+    password = db.Column(db.String(255)) # Увеличено для хранения хэша
     role = db.Column(db.String(20))
-    telegram_id = db.Column(db.String(50), nullable=True) # ID чата клиента в Telegram
+    telegram_id = db.Column(db.String(50), nullable=True)
 
 class Product(db.Model):
     sku = db.Column(db.String(50), primary_key=True)
@@ -25,5 +25,4 @@ class PreOrder(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     sku = db.Column(db.String(50), db.ForeignKey('product.sku'))
     quantity = db.Column(db.Integer)
-    # Статусы: 'Waitlist' (Ожидание поставки), 'Pending' (Забронировано в пути), 'Ready' (На складе)
     status = db.Column(db.String(20))
