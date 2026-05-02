@@ -1,42 +1,105 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from database import db, User, Product, Supply, PreOrder
 from modules.inventory import InventoryModule
 from modules.orders import OrderModule
+from modules.identity import IdentityModule
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///warehouse.db'
+app.secret_key = 'strict_secret_key_2026'
 db.init_app(app)
 
-# Инициализация БД и первичных данных
 with app.app_context():
     db.create_all()
-    if not User.query.first():
-        db.session.add(User(username="Ivan_Client", role="client"))
-        db.session.add(User(username="Manager_Alex", role="manager"))
+    if not User.query.filter_by(username="client").first():
+        # Хардкод убран. telegram_id по умолчанию пустой.
+        db.session.add(User(username="client", password="password123", role="client", telegram_id=""))
+    if not User.query.filter_by(username="admin").first():
+        db.session.add(User(username="admin", password="admin123", role="manager", telegram_id=""))
+    if not Product.query.first():
         db.session.add(Product(sku="IPHONE15", name="Apple iPhone 15"))
-        db.session.commit()
+        db.session.add(Product(sku="MACBOOK", name="MacBook Pro M3"))
+    db.session.commit()
+
+
 
 @app.route('/')
 def index():
-    return render_template('index.html', 
-                           supplies=Supply.query.all(), 
-                           orders=PreOrder.query.all(),
-                           products=Product.query.all())
+    if 'user_id' in session:
+        if session['role'] == 'manager':
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('client_dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password'] # Извлечение пароля из формы
+        
+        user = IdentityModule.authenticate(username, password)
+        if user:
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
+            return redirect(url_for('index'))
+        else:
+            flash("Ошибка: Неверный логин или пароль.")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+@app.route('/admin')
+def admin_dashboard():
+    if session.get('role') != 'manager':
+        return "Доступ запрещен. Требуются права менеджера.", 403
+    supplies = Supply.query.all()
+    orders = PreOrder.query.all()
+    products = Product.query.all()
+    return render_template('admin.html', supplies=supplies, orders=orders, products=products)
 
 @app.route('/add_supply', methods=['POST'])
 def add_supply():
-    InventoryModule.add_supply(request.form['sku'], int(request.form['qty']), request.form['date'])
-    return redirect('/')
-
-@app.route('/make_order', methods=['POST'])
-def make_order():
-    OrderModule.create_preorder(1, request.form['sku'], request.form['qty']) # ID=1 это Ivan_Client
-    return redirect('/')
+    if session.get('role') == 'manager':
+        InventoryModule.add_supply(request.form['sku'], int(request.form['qty']), request.form['date'])
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/receive/<int:id>')
 def receive(id):
-    InventoryModule.receive_supply(id)
-    return redirect('/')
+    if session.get('role') == 'manager':
+        InventoryModule.receive_supply(id)
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/client')
+def client_dashboard():
+    if session.get('role') != 'client':
+        return "Доступ запрещен. Вы не являетесь клиентом.", 403
+    
+    user = User.query.get(session['user_id']) # Получаем текущего юзера
+    my_orders = PreOrder.query.filter_by(user_id=session['user_id']).all()
+    products = Product.query.all()
+    return render_template('client.html', orders=my_orders, products=products, user=user)
+
+@app.route('/update_tg', methods=['POST'])
+def update_tg():
+    if session.get('role') == 'client':
+        user = User.query.get(session['user_id'])
+        user.telegram_id = request.form['tg_id']
+        db.session.commit()
+        flash("Telegram ID успешно сохранен.")
+    return redirect(url_for('client_dashboard'))
+
+@app.route('/make_order', methods=['POST'])
+def make_order():
+    if session.get('role') == 'client':
+        success, msg = OrderModule.create_preorder(session['user_id'], request.form['sku'], request.form['qty'])
+        flash(msg)
+    return redirect(url_for('client_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)
