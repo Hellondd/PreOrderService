@@ -56,6 +56,7 @@ pip install -r requirements.txt
 ```
 ### 3. Конфигурация
 Создайте файл .env в корневой директории и укажите параметры (согласно рекомендациям по безопасности):
+```
 SECRET_KEY=your_secret_key
 TELEGRAM_TOKEN=your_bot_token
 ```
