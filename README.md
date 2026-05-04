@@ -47,18 +47,19 @@ preorder_service/
 ```bash
 git clone [https://github.com/your-username/preorder-service.git](https://github.com/your-username/preorder-service.git)
 cd preorder-service
-
+```
 ### 2. Настройка окружения
 ```
 python -m venv venv
 source venv/bin/activate  # Для Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
+```
 ### 3. Конфигурация
 Создайте файл .env в корневой директории и укажите параметры (согласно рекомендациям по безопасности):
 SECRET_KEY=your_secret_key
 TELEGRAM_TOKEN=your_bot_token
-
+```
 ### 4. Запуск приложения
 ```
 python app.py
+```
