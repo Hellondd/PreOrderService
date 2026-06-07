@@ -12,13 +12,15 @@ class OrderModule:
         total_in_transit = (
             db.session.query(db.func.sum(Supply.quantity))
             .filter_by(sku=sku, status="In Transit")
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         already_booked = (
             db.session.query(db.func.sum(PreOrder.quantity))
             .filter_by(sku=sku, status="Pending")
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         available = total_in_transit - already_booked
