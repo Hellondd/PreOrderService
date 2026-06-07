@@ -1,2 +1,2 @@
 Проект развернут на PaaS (Render).
-Публичная ссылка на сервис: https://твой-проект.onrender.com (УКАЖЕШЬ СВОЮ ПОСЛЕ ДЕПЛОЯ)
+Публичная ссылка на сервис: https://preorderservice.onrender.com
