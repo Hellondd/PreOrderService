@@ -128,7 +128,3 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
     return redirect(url_for("client_dashboard"))
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
