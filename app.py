@@ -106,6 +106,5 @@ def make_order():
         success, msg = OrderModule.create_preorder(session['user_id'], request.form['sku'], request.form['qty'])
         flash(msg)
     return redirect(url_for('client_dashboard'))
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
