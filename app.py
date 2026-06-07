@@ -122,7 +122,7 @@ def make_order():
             session["user_id"], request.form["sku"], request.form["qty"]
         )
         flash(msg)
-<<<<<<< Updated upstream
+
     return redirect(url_for('client_dashboard'))
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
@@ -132,4 +132,4 @@ if __name__ == '__main__':
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
->>>>>>> Stashed changes
+
