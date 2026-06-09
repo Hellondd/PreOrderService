@@ -1,0 +1,59 @@
+C:\Users\home\AppData\Local\Programs\Python\Python311\Lib\site-packages\pytest_asyncio\plugin.py:208: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-8.0.2, pluggy-1.6.0 -- C:\Users\home\AppData\Local\Programs\Python\Python311\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\home\Desktop\test1`\PreOrderService
+plugins: anyio-4.13.0, asyncio-0.24.0, cov-7.1.0
+asyncio: mode=Mode.STRICT, default_loop_scope=None
+collecting ... collected 8 items
+
+tests/test_api.py::test_login_success PASSED                             [ 12%]
+tests/test_api.py::test_login_fail PASSED                                [ 25%]
+tests/test_api.py::test_admin_dashboard_requires_auth PASSED             [ 37%]
+tests/test_api.py::test_add_supply_as_manager PASSED                     [ 50%]
+tests/test_business_logic.py::test_1_create_preorder_waitlist PASSED     [ 62%]
+tests/test_business_logic.py::test_2_add_supply_updates_waitlist PASSED  [ 75%]
+tests/test_business_logic.py::test_3_create_preorder_pending_immediately PASSED [ 87%]
+tests/test_business_logic.py::test_4_receive_supply_updates_to_ready PASSED [100%]
+
+============================== warnings summary ===============================
+tests/test_business_logic.py::test_1_create_preorder_waitlist
+tests/test_business_logic.py::test_3_create_preorder_pending_immediately
+  C:\Users\home\Desktop\test1`\PreOrderService\modules\orders.py:8: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    user = User.query.get(user_id)
+
+tests/test_business_logic.py::test_2_add_supply_updates_waitlist
+tests/test_business_logic.py::test_4_receive_supply_updates_to_ready
+tests/test_business_logic.py::test_4_receive_supply_updates_to_ready
+  C:\Users\home\Desktop\test1`\PreOrderService\modules\inventory.py:19: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    user = User.query.get(order.user_id)
+
+tests/test_business_logic.py::test_4_receive_supply_updates_to_ready
+  C:\Users\home\Desktop\test1`\PreOrderService\modules\inventory.py:35: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    supply = Supply.query.get(supply_id)
+
+tests/test_business_logic.py::test_4_receive_supply_updates_to_ready
+  C:\Users\home\Desktop\test1`\PreOrderService\tests\test_business_logic.py:77: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    supply_updated = Supply.query.get(supply.id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.11.9-final-0 _______________
+
+Name                           Stmts   Miss  Cover
+--------------------------------------------------
+app.py                            91     38    58%
+database.py                       23      0   100%
+modules\identity.py               18      1    94%
+modules\inventory.py              29      0   100%
+modules\notifications.py          22     11    50%
+modules\orders.py                 20      0   100%
+tests\test_api.py                 44      0   100%
+tests\test_business_logic.py      58      0   100%
+--------------------------------------------------
+TOTAL                            305     50    84%
+Coverage HTML written to dir htmlcov
+======================== 8 passed, 7 warnings in 2.27s ========================

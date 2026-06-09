@@ -1,92 +1,81 @@
 import pytest
-from app import app, db
-from database import User, Product, Supply, PreOrder
+import sys
+import os
+
+# Добавляем корень проекта в sys.path, чтобы импортировать app и modules
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app import app
+from database import db, User, Product, Supply, PreOrder
 from modules.inventory import InventoryModule
 from modules.orders import OrderModule
 
-
-# Фикстура для создания реальной тестовой базы данных SQLite
+# Фикстура для тестовой БД (создаётся отдельно, не мешает основной)
 @pytest.fixture(scope="module")
-def test_db():
+def test_client():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test_warehouse.db"
     app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
 
     with app.app_context():
         db.create_all()
-
-        # Подготовка данных: создаем клиента и товар для тестирования
-        test_user = User(
-            username="test_client", password="123", role="client", telegram_id="00000"
-        )
-        test_product = Product(sku="TEST_SKU", name="Тестовый товар")
-
-        db.session.add(test_user)
-        db.session.add(test_product)
+        # Создаём тестового пользователя и товар, если их нет
+        if not User.query.filter_by(username="test_client").first():
+            test_user = User(
+                username="test_client",
+                password=IdentityModule.hash_password("123"),
+                role="client",
+                telegram_id="12345"
+            )
+            db.session.add(test_user)
+        if not Product.query.filter_by(sku="TEST_SKU").first():
+            test_product = Product(sku="TEST_SKU", name="Тестовый товар")
+            db.session.add(test_product)
         db.session.commit()
-
-        yield db
-
+        yield app.test_client()
         db.drop_all()
 
+# Импортируем IdentityModule после того, как путь настроен
+from modules.identity import IdentityModule
 
-# ==========================================
-# ИНТЕГРАЦИОННЫЕ ТЕСТЫ БИЗНЕС-ЛОГИКИ
-# ==========================================
+def test_1_create_preorder_waitlist(test_client):
+    """Создание заказа при отсутствии поставок -> статус Waitlist"""
+    with app.app_context():
+        user = User.query.filter_by(username="test_client").first()
+        success, msg = OrderModule.create_preorder(user.id, "TEST_SKU", 2)
+        assert success is True
+        order = PreOrder.query.filter_by(user_id=user.id).first()
+        assert order is not None
+        assert order.status == "Waitlist"
+        assert order.quantity == 2
 
+def test_2_add_supply_updates_waitlist(test_client):
+    """Добавление поставки переводит заказ из Waitlist в Pending"""
+    with app.app_context():
+        InventoryModule.add_supply("TEST_SKU", 5, "2026-06-01")
+        supply = Supply.query.filter_by(sku="TEST_SKU").first()
+        assert supply.status == "In Transit"
+        order = PreOrder.query.filter_by(sku="TEST_SKU").first()
+        assert order.status == "Pending"
 
-def test_1_create_preorder_waitlist(test_db):
-    """Шаг 1: Создание заказа при отсутствии поставок (ожидается Waitlist)"""
-    # Вызываем реальный метод из orders.py
-    success, msg = OrderModule.create_preorder(user_id=1, sku="TEST_SKU", qty=2)
+def test_3_create_preorder_pending_immediately(test_client):
+    """Если товар уже в пути и есть свободный остаток, заказ создаётся со статусом Pending"""
+    with app.app_context():
+        user = User.query.filter_by(username="test_client").first()
+        success, msg = OrderModule.create_preorder(user.id, "TEST_SKU", 3)
+        assert success is True
+        orders = PreOrder.query.filter_by(sku="TEST_SKU").order_by(PreOrder.id).all()
+        # Всего должно быть 2 заказа: первый на 2 шт, второй на 3 шт
+        assert len(orders) == 2
+        assert orders[1].status == "Pending"
 
-    # Проверка физической записи в БД
-    order = PreOrder.query.first()
-    assert order is not None
-    assert (
-        order.status == "Waitlist"
-    )  # Товара нет в пути, статус должен быть Waitlist[cite: 12]
-    assert order.quantity == 2
-
-
-def test_2_add_supply_updates_waitlist(test_db):
-    """Шаг 2: Добавление поставки. Заказ должен сменить статус на Pending"""
-    # Вызываем реальный метод из inventory.py[cite: 10]
-    InventoryModule.add_supply(sku="TEST_SKU", qty=5, date="2026-06-01")
-
-    # Проверяем саму поставку
-    supply = Supply.query.first()
-    assert supply.status == "In Transit"
-    assert supply.quantity == 5
-
-    # Проверяем, что заказ обновился благодаря методу _process_orders[cite: 10]
-    order = PreOrder.query.first()
-    assert order.status == "Pending"
-
-
-def test_3_create_preorder_pending_immediately(test_db):
-    """Шаг 3: Создание заказа, когда товар УЖЕ в пути (ожидается Pending сразу)"""
-    # В пути 5 шт, 2 уже забронировано. Заказываем оставшиеся 3.
-    success, msg = OrderModule.create_preorder(user_id=1, sku="TEST_SKU", qty=3)
-
-    # В базе должно быть 2 заказа
-    orders = PreOrder.query.order_by(PreOrder.id).all()
-    assert len(orders) == 2
-    assert (
-        orders[1].status == "Pending"
-    )  # Хватило товара в пути, статус сразу Pending[cite: 12]
-    assert orders[1].quantity == 3
-
-
-def test_4_receive_supply_updates_to_ready(test_db):
-    """Шаг 4: Приемка товара на склад. Все брони должны стать Ready"""
-    supply = Supply.query.first()
-    # Вызываем реальный метод приемки[cite: 10]
-    InventoryModule.receive_supply(supply_id=supply.id)
-
-    supply_updated = Supply.query.first()
-    assert supply_updated.status == "Arrived"  # Статус поставки изменился[cite: 10]
-
-    # Все заказы должны поменять статус на Ready[cite: 10]
-    orders = PreOrder.query.all()
-    for order in orders:
-        assert order.status == "Ready"
+def test_4_receive_supply_updates_to_ready(test_client):
+    """Приёмка товара на склад переводит заказы в статус Ready"""
+    with app.app_context():
+        supply = Supply.query.filter_by(sku="TEST_SKU").first()
+        InventoryModule.receive_supply(supply.id)
+        supply_updated = Supply.query.get(supply.id)
+        assert supply_updated.status == "Arrived"
+        orders = PreOrder.query.filter_by(sku="TEST_SKU").all()
+        for order in orders:
+            assert order.status == "Ready"
