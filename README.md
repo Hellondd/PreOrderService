@@ -1,4 +1,4 @@
-<img width="569" height="536" alt="изображение" src="https://github.com/user-attachments/assets/3524f325-111a-4e7a-a8c9-c826fd1eb87c" /># PreOrder Service — система предзаказов товаров
+# PreOrder Service — система предзаказов товаров
 
 [![CI](https://github.com/Hellondd/PreOrderService/actions/workflows/ci.yml/badge.svg)](https://github.com/Hellondd/PreOrderService/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
