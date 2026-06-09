@@ -9,13 +9,16 @@ logging.basicConfig(
 
 
 class NotificationModule:
-    # В notifications.py измени строку:
     BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
     IS_DEBUG = os.getenv("DEBUG", "False") == "True"
 
     @staticmethod
     def send_telegram_msg(chat_id, text):
-        if not chat_id or not NotificationModule.BOT_TOKEN:
+        if not chat_id:
+            logging.warning("Telegram chat_id is empty, notification skipped")
+            return
+        if not NotificationModule.BOT_TOKEN:
+            logging.warning("TELEGRAM_TOKEN is not set. Set it in .env to enable notifications.")
             return
 
         if NotificationModule.IS_DEBUG:
