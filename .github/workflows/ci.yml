@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, support/*, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --exit-zero --max-line-length=120 --statistics
+    - name: Test with pytest
+      run: |
+        pytest tests/ -v
+    - name: Check security with pip-audit
+      run: |
+        pip install pip-audit
+        pip-audit --requirement requirements.txt || true
