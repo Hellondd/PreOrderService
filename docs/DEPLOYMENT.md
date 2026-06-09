@@ -2,7 +2,7 @@
 
 ## 1. Где развернут проект
 Вариант: B. PaaS / GitHub deploy (Render.com)
-Адрес: https://твой-проект.onrender.com
+Адрес: (https://preorderservice.onrender.com)
 
 ## 2. Требования
 - Автоматическая сборка: GitHub Actions / Render CI
@@ -14,6 +14,6 @@
 - **Start Command:** `gunicorn app:app`
 
 ## 4. Проверка и управление
-- Адрес приложения: `https://твой-проект.onrender.com`
+- Адрес приложения: `https://preorderservice.onrender.com`
 - Логи доступны во вкладке "Logs" в панели управления Render.
 - Перезапуск сервиса (Manual Deploy -> Restart Service).
